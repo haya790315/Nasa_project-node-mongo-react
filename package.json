@@ -1,0 +1,20 @@
+{
+  "name": "nasa-app-project",
+  "version": "1.0.0",
+  "description": "project root package",
+  "main": "index.js",
+  "scripts": {
+    "server": "npm run watch --prefix server",
+    "client": "npm run start --prefix client",
+    "server-install": "npm install --prefix server",
+    "client-install": "npm install --prefix client",
+    "watch": "npm-run-all -p server client"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^8.15.0",
+    "npm-run-all": "^4.1.5"
+  }
+}

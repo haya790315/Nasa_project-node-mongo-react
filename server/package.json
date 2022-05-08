@@ -1,0 +1,21 @@
+{
+  "name": "nasa-be",
+  "version": "1.0.0",
+  "description": "NASA mission control api",
+  "main": "server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "watch": "node src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "csv-parse": "^5.0.4",
+    "express": "^4.18.1",
+    "mongoose": "^6.3.2",
+    "nasa-app-project": "file:..",
+    "nodemon": "^2.0.16"
+  }
+}
