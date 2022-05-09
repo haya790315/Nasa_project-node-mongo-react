@@ -1,4 +1,5 @@
 const launchesData = require("./launches.mongo");
+const axios = require("axios");
 // const launches = new Map();
 
 const defaultLaunch = [
@@ -24,21 +25,93 @@ const defaultLaunch = [
   },
 ];
 
-insertLaches(defaultLaunch);
+// insertLaunches(defaultLaunch);
 
 // launches.set(lastFlightNumber, launch);
 
+const SPACE_X_URL = "https://api.spacexdata.com/v4/launches/query";
+
+async function checkDataUpdated() {
+  const lastLaunch = await axios.get(
+    "https://api.spacexdata.com/v4/launches/latest"
+  );
+
+  const lastLaunchNumber = lastLaunch.data["flight_number"];
+
+  const lastDataIsUpdated = await launchesData.findOne({
+    flightNumber: lastLaunchNumber,
+  });
+  return lastDataIsUpdated ? true : false;
+}
+
+async function loadLaunchData() {
+  if (await checkDataUpdated())
+    return console.log("No new launches data to update");
+  try {
+    const response = await axios.post(SPACE_X_URL, {
+      query: {},
+      options: {
+        pagination: false,
+        select: ["flight_number", "name", "date_utc", "upcoming", "success"],
+        populate: [
+          {
+            path: "rocket",
+            select: "name",
+          },
+          { path: "payloads", select: "customs" },
+        ],
+      },
+    });
+    const launchDocs = response.data.docs;
+    let newMission = 0;
+
+    for await (const launchDoc of launchDocs) {
+      const payloads = launchDoc["payloads"];
+      const customers = payloads.flatMap((payload) => payload["customers"]);
+      const launch = {
+        flightNumber: launchDoc["flight_number"],
+        mission: launchDoc["name"],
+        rocket: launchDoc["rocket"]["name"],
+        launchDate: launchDoc["date_utc"],
+        upcoming: launchDoc["upcoming"],
+        success: launchDoc["success"],
+        customers,
+      };
+      const res = await launchesData.updateOne(
+        { flightNumber: launch.flightNumber },
+        launch,
+        { upsert: true }
+      );
+      if (res.upsertedCount !== 0 || res.modifiedCount !== 0) {
+        newMission++;
+      }
+    }
+    console.log(`${newMission} mission updated`);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function findLaunch(filter) {
+  return await launchesData.findOne(filter);
+}
+
 async function existsLaunchWithId(launchId) {
-  return await launchesData.findOne({
+  return await findLaunch({
     flightNumber: launchId,
   });
 }
 
-async function getAllLaunches() {
-  return await launchesData.find({}, "-_id -__v");
+async function getAllLaunches(skip,limit) {
+
+
+  return await launchesData.find({}, "-_id -__v").sort({flightNumber:-1}).skip(skip).limit(limit)
+  
+  ;
 }
 
-async function insertLaches(newLaunch) {
+// customer launches Insert function
+async function insertLaunches(newLaunch) {
   try {
     let newMission = 0;
     for await (let launch of newLaunch) {
@@ -102,4 +175,5 @@ module.exports = {
   createNewLaunches,
   abortLaunchById,
   existsLaunchWithId,
+  loadLaunchData,
 };

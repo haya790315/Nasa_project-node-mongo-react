@@ -6,7 +6,9 @@ const {
 } = require("../../models/launches.model");
 
 async function httpGetAllLaunches(req, res) {
-  return res.status(200).json(await getAllLaunches());
+  const {page=1,limit=10} = req.query
+  const skip = (Math.abs(page)-1) * Math.abs(limit)
+  return res.status(200).json(await getAllLaunches(skip,limit));
 }
 
 function httpCreateNewLaunches(req, res) {

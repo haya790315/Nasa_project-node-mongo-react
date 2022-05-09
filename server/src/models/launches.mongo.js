@@ -16,7 +16,7 @@ const launchesSchema = mongoose.Schema({
   target:String,
   customers: [String],
   upcoming: Boolean,
-  success: Boolean,
+  success:String,
 });
 
 
